@@ -1,5 +1,9 @@
 package termproject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Random;
+
 /**
  * Title:        Term Project 2-4 Trees
  * Description:
@@ -69,7 +73,7 @@ public class TwoFourTree
     private TFNode findInorderSuccessor(TFNode node, Object key) {
        int keyIndex = 0;
        for (int i = 0; i < node.getNumItems(); i++) {
-           if (node.getItem(i) == key) {
+           if (treeComp.isEqual(node.getItem(i).key(), key)) {
                keyIndex = i;
                break;
            }
@@ -170,7 +174,9 @@ public class TwoFourTree
         boolean found  = false;
         int removalIndex = 0;
         Object removalElement = null;
+        int[] nodeKeys = {0,0,0,0,0};
         for (int i = 0; i < removalNode.getNumItems(); i++) {
+            nodeKeys[i] = (int)removalNode.getItem(i).key();
             if (treeComp.isEqual(removalNode.getItem(i).key(), key)) {
                 found = true;
                 removalElement = removalNode.getItem(i).element();
@@ -178,6 +184,8 @@ public class TwoFourTree
             }
         }
         if (!found) {
+            System.out.println("Key: " + Integer.toString((int)key));
+            System.out.println(Arrays.toString(nodeKeys));
             throw new ElementNotFoundException("Key was not found within the tree.");
         }
         TFNode inorderSuccessor = null;
@@ -196,7 +204,7 @@ public class TwoFourTree
         else {
             removalNode.removeItem(removalIndex);
             if (removalNode.getNumItems() == 0) {
-                fixUnderflow(inorderSuccessor);
+                fixUnderflow(removalNode);
             }
         }
         return removalElement;
@@ -211,7 +219,7 @@ public class TwoFourTree
             return;
         }
         int childIndex = whatChildIsThis(emptyNode);
-        if (childIndex - 1 > -1) {
+        if (childIndex > 0) {
             leftSib = parent.getChild(childIndex - 1);
         }
         rightSib = parent.getChild(childIndex + 1);
@@ -222,10 +230,12 @@ public class TwoFourTree
             rightTransfer(emptyNode, rightSib, parent);
         }
         else if (leftSib != null) {
+            leftFusion(emptyNode, leftSib, parent);
             
         }
         else {
-            
+            rightFusion(emptyNode, rightSib, parent);
+           
         }
     }
     
@@ -237,7 +247,10 @@ public class TwoFourTree
         parent.addItem(pivotIndex, pivotItem);
         //Switch the child of the left sib
         TFNode leftSibChild = leftSib.getChild(leftSib.getNumItems()+1);
-        leftSibChild.setParent(original);
+        leftSib.setChild(leftSib.getNumItems()+1, null);
+        if (leftSibChild != null) {
+            leftSibChild.setParent(original);
+        }
         original.setChild(0, leftSibChild);
     }
     
@@ -246,119 +259,100 @@ public class TwoFourTree
         Item pivotItem = rightSib.removeItem(0);
         int pivotIndex = whatChildIsThis(rightSib);
         //Need to insert item to shift the child pointers to provide the hole for the new child
-        original.addItem(0, parent.deleteItem(pivotIndex));
-        parent.addItem(pivotIndex, pivotItem);
+        original.addItem(0, parent.deleteItem(pivotIndex-1));
+        parent.addItem(pivotIndex-1, pivotItem);
         //Switch the child of the right sib
-        rightSibChild.setParent(original);
-        original.setChild(0, rightSibChild);
+        if (rightSibChild != null) {
+            rightSibChild.setParent(original);
+        }
+        original.setChild(original.getNumItems(), rightSibChild);
+    }
+    
+    private void leftFusion(TFNode original, TFNode leftSib, TFNode parent) {
+        int originalIndex = whatChildIsThis(original);
+        parent.setChild(originalIndex, null);
+        TFNode leftSibChild = null;
+        leftSibChild = original.getChild(0);
+        Item fusionItem = parent.removeItem(originalIndex-1);
+        leftSib.addItem(leftSib.getNumItems(), fusionItem);
+        leftSib.setChild(leftSib.getNumItems(), leftSibChild);
+        if (leftSibChild != null) {
+            leftSibChild.setParent(leftSib);
+        }
+        parent.setChild(originalIndex-1, leftSib);
+        if (parent == root() && parent.getNumItems() == 0) {
+            treeRoot = leftSib;
+            leftSib.setParent(null);
+        }
+        else {
+            if (parent.getNumItems() == 0) {
+                fixUnderflow(parent);
+            }
+        }
+    }
+    private void rightFusion(TFNode original, TFNode rightSib, TFNode parent) {
+        int originalIndex = whatChildIsThis(original);
+        parent.setChild(originalIndex, null);
+        TFNode rightSibChild = null;
+        rightSibChild = original.getChild(0);
+        Item fusionItem = parent.removeItem(originalIndex);
+        rightSib.insertItem(0, fusionItem);
+        rightSib.setChild(0, rightSibChild);
+        if (rightSibChild != null) {
+            rightSibChild.setParent(rightSib);
+        }
+        parent.setChild(originalIndex, rightSib);
+        if (parent == root() && parent.getNumItems() == 0) {
+            treeRoot = rightSib;
+            rightSib.setParent(null);
+        }
+        else {
+            if (parent.getNumItems() == 0) {
+                fixUnderflow(parent);
+            }
+            
+        }
     }
 
     public static void main(String[] args) {
         Comparator myComp = new IntegerComparator();
         TwoFourTree myTree = new TwoFourTree(myComp);
-
-        Integer myInt1 = new Integer(47);
-        myTree.insertElement(myInt1, myInt1);
-        Integer myInt2 = new Integer(83);
-        myTree.insertElement(myInt2, myInt2);
-        Integer myInt3 = new Integer(22);
-        myTree.insertElement(myInt3, myInt3);
         
-        Integer myInt4 = new Integer(16);
-        myTree.insertElement(myInt4, myInt4);
-        
-        Integer myInt5 = new Integer(49);
-        myTree.insertElement(myInt5, myInt5);
-        
-
-        Integer myInt6 = new Integer(100);
-        myTree.insertElement(myInt6, myInt6);
-        
-        
-        Integer myInt7 = new Integer(38);
-        myTree.insertElement(myInt7, myInt7);
-        
-        
-        
-
-        Integer myInt8 = new Integer(3);
-        myTree.insertElement(myInt8, myInt8);
-        
-        myTree.printAllElements();
-        myTree.checkTree();
-
-        Integer myInt9 = new Integer(22);
-        myTree.insertElement(myInt9, myInt9);
-        
-        myTree.removeElement(22);
-        myTree.printAllElements();
-        myTree.checkTree();
-        
-/*
-        Integer myInt10 = new Integer(66);
-        myTree.insertElement(myInt10, myInt10);
-
-        Integer myInt11 = new Integer(19);
-        myTree.insertElement(myInt11, myInt11);
-
-        Integer myInt12 = new Integer(23);
-        myTree.insertElement(myInt12, myInt12);
-
-        Integer myInt13 = new Integer(24);
-        myTree.insertElement(myInt13, myInt13);
-
-        Integer myInt14 = new Integer(88);
-        myTree.insertElement(myInt14, myInt14);
-
-        
-        Integer myInt15 = new Integer(1);
-        myTree.insertElement(myInt15, myInt15);
-
-        myTree.printAllElements();
-        myTree.checkTree();
-        
-        Integer myInt16 = new Integer(97);
-        myTree.insertElement(myInt16, myInt16);
-
-        Integer myInt17 = new Integer(94);
-        myTree.insertElement(myInt17, myInt17);
-
-        Integer myInt18 = new Integer(35);
-        myTree.insertElement(myInt18, myInt18);
-
-        Integer myInt19 = new Integer(51);
-        myTree.insertElement(myInt19, myInt19);
-        System.out.println("Final Tree: ");
-        myTree.printAllElements();
-        myTree.checkTree();
-        System.out.println("done");
-
         myTree = new TwoFourTree(myComp);
         final int TEST_SIZE = 10000;
 
-
+        Random rand = new Random();
+        ArrayList<Integer> testValues = new ArrayList<>();
         for (int i = 0; i < TEST_SIZE; i++) {
-            myTree.insertElement(new Integer(i), new Integer(i));
+            int randValue = rand.nextInt(10000)+1;
+            testValues.add(randValue);
+            myTree.insertElement(new Integer(randValue), new Integer(randValue));
             //          myTree.printAllElements();
             //         myTree.checkTree();
         }
         System.out.println("Final Tree: ");
-        myTree.printAllElements();
-        myTree.checkTree();
+       // myTree.printAllElements();
+        //myTree.checkTree();
         System.out.println("done");
         
         System.out.println("removing");
-        for (int i = 0; i < TEST_SIZE; i++) {
-            int out = (Integer) myTree.removeElement(new Integer(i));
-            if (out != i) {
+        for (int i = 0; i < testValues.size(); i++) {
+            //myTree.printAllElements();
+            int out = (Integer) myTree.removeElement(testValues.get(i));
+            if (out != testValues.get(i)) {
                 throw new TwoFourTreeException("main: wrong element removed");
             }
-            if (i > TEST_SIZE - 15) {
+            if (i < TEST_SIZE - 25) {
+                System.out.println("deleting");
+                myTree.checkTree();
+            }
+            else {
                 myTree.printAllElements();
+                System.out.println("Hi Charles");
+                myTree.checkTree();
             }
         }
         System.out.println("done");
-*/
     }
 
     public void printAllElements() {
