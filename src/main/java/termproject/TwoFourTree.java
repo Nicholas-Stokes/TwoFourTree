@@ -45,7 +45,20 @@ public class TwoFourTree
      * @return object corresponding to key; null if not found
      */
     public Object findElement(Object key) {
-        return null;
+        TFNode removalNode = new TFNode();
+        removalNode = findNode(root(), key);
+        boolean found  = false;
+        Object removalElement = null;
+        for (int i = 0; i < removalNode.getNumItems(); i++) {
+            if (treeComp.isEqual(removalNode.getItem(i).key(), key)) {
+                found = true;
+                removalElement = removalNode.getItem(i).element();
+            }
+        }
+        if (!found) {
+            return null;
+        }
+        return removalElement;
     }
     /**
      * Searches tree to find the node where a key resides (or should)
@@ -110,7 +123,7 @@ public class TwoFourTree
         int insertionIndex = findFirstGreaterThanOrEqual(insertionNode, key);
         insertionNode.insertItem(insertionIndex, elementItem);
         if (insertionNode.getNumItems() == insertionNode.getMaxItems()+1) {
-            //Fix overflow or something
+            //Fix overflow
             fixOverflow(insertionNode);
         }
         
@@ -280,6 +293,7 @@ public class TwoFourTree
             leftSibChild.setParent(leftSib);
         }
         parent.setChild(originalIndex-1, leftSib);
+        //If the root is now empty, switch who the root is
         if (parent == root() && parent.getNumItems() == 0) {
             treeRoot = leftSib;
             leftSib.setParent(null);
@@ -302,6 +316,7 @@ public class TwoFourTree
             rightSibChild.setParent(rightSib);
         }
         parent.setChild(originalIndex, rightSib);
+        //If the root is now empty, switch who the root is
         if (parent == root() && parent.getNumItems() == 0) {
             treeRoot = rightSib;
             rightSib.setParent(null);
@@ -324,7 +339,7 @@ public class TwoFourTree
         Random rand = new Random();
         ArrayList<Integer> testValues = new ArrayList<>();
         for (int i = 0; i < TEST_SIZE; i++) {
-            int randValue = rand.nextInt(10000)+1;
+            int randValue = rand.nextInt(TEST_SIZE/10)+1;
             testValues.add(randValue);
             myTree.insertElement(new Integer(randValue), new Integer(randValue));
             //          myTree.printAllElements();
@@ -338,17 +353,16 @@ public class TwoFourTree
         System.out.println("removing");
         for (int i = 0; i < testValues.size(); i++) {
             //myTree.printAllElements();
+            if (i > TEST_SIZE - 25) {
+                System.out.println("deleting "+testValues.get(i));
+                myTree.checkTree();
+            }
             int out = (Integer) myTree.removeElement(testValues.get(i));
             if (out != testValues.get(i)) {
                 throw new TwoFourTreeException("main: wrong element removed");
             }
-            if (i < TEST_SIZE - 25) {
-                System.out.println("deleting");
-                myTree.checkTree();
-            }
-            else {
+            if (i > TEST_SIZE - 25) {
                 myTree.printAllElements();
-                System.out.println("Hi Charles");
                 myTree.checkTree();
             }
         }
